@@ -1,1 +1,1 @@
-# verynicemaps.github.io
+# verynicemaps
