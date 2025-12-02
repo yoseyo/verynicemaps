@@ -204,7 +204,11 @@
         }
         
         .sidebar.collapsed {
-            transform: translateY(calc(100% - 80px));
+            transform: translateY(calc(100% - 50px));
+        }
+        
+        .sidebar.expanded ~ .sidebar-toggle {
+            bottom: calc(85vh - 50px);
         }
         
         .sidebar.expanded {
@@ -212,8 +216,8 @@
         }
         
         .sidebar-toggle {
-            position: absolute;
-            top: -50px;
+            position: fixed;
+            bottom: 0;
             left: 50%;
             transform: translateX(-50%);
             width: 60px;
@@ -238,10 +242,12 @@
             touch-action: manipulation;
         }
         
+        
         .sidebar-toggle:active {
             transform: translateX(-50%) scale(0.95);
             background: linear-gradient(135deg, rgba(60, 72, 58, 0.95) 0%, rgba(50, 60, 48, 0.95) 100%);
         }
+        
         
         .sidebar-toggle .arrow {
             transition: transform 0.3s ease;
@@ -682,8 +688,35 @@
         
         @media (max-width: 768px) {
             .leaflet-popup-content-wrapper {
-                max-width: 85vw;
-                max-height: 60vh;
+                max-width: 90vw;
+                max-height: 50vh;
+                margin: 0 auto;
+            }
+            
+            .leaflet-popup-content {
+                margin: 12px;
+                font-size: 0.9em;
+            }
+            
+            .popup-title {
+                font-size: 1.2em;
+                margin-bottom: 12px;
+            }
+            
+            .popup-info {
+                font-size: 0.9em;
+                line-height: 1.6;
+            }
+            
+            .popup-info p {
+                margin-bottom: 8px;
+            }
+            
+            .leaflet-popup-close-button {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 20px !important;
+                padding: 4px !important;
             }
         }
         
@@ -961,27 +994,31 @@
         
         /* Mobile-specific optimizations */
         .header {
-            padding: 12px 15px 10px 15px;
+            padding: 8px 12px 6px 12px;
             flex-shrink: 0;
         }
         
         .header h1 {
-            font-size: 1.4em;
-            margin-bottom: 4px;
+            font-size: 1.1em;
+            margin-bottom: 2px;
         }
         
         .header p {
-            font-size: 0.65em;
-            margin-bottom: 10px;
+            font-size: 0.6em;
+            margin-bottom: 6px;
         }
         
         .header #filter-buttons {
-            gap: 6px;
+            gap: 4px;
+            max-height: 80px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .filter-btn {
-            padding: 8px 12px;
-            font-size: 0.65em;
+            padding: 6px 10px;
+            font-size: 0.6em;
+            min-height: 32px;
         }
         
         .weather-widget {
