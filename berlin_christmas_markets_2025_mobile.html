@@ -994,31 +994,34 @@
         
         /* Mobile-specific optimizations */
         .header {
-            padding: 8px 12px 6px 12px;
+            padding: 6px 10px 4px 10px;
             flex-shrink: 0;
         }
         
         .header h1 {
-            font-size: 1.1em;
-            margin-bottom: 2px;
+            font-size: 0.95em;
+            margin-bottom: 1px;
         }
         
         .header p {
-            font-size: 0.6em;
-            margin-bottom: 6px;
+            font-size: 0.55em;
+            margin-bottom: 4px;
         }
         
         .header #filter-buttons {
-            gap: 4px;
-            max-height: 80px;
+            gap: 3px;
+            max-height: 50px;
             overflow-y: auto;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
+            padding: 2px 0;
         }
         
         .filter-btn {
-            padding: 6px 10px;
-            font-size: 0.6em;
-            min-height: 32px;
+            padding: 4px 8px;
+            font-size: 0.55em;
+            min-height: 28px;
+            line-height: 1.2;
         }
         
         .weather-widget {
@@ -1313,35 +1316,67 @@
             
             map.addLayer(markerClusterGroup);
             
-            // Adjust popup position when zoom or pan changes
+            // Adjust popup position when zoom or pan changes (but not during popup opening)
             map.on('zoomend', function() {
-                adjustPopupToViewport();
+                // Only adjust if popup is already open and stable
+                setTimeout(function() {
+                    if (!isAdjustingPopup) {
+                        adjustPopupToViewport();
+                    }
+                }, 100);
             });
             
             map.on('moveend', function() {
-                adjustPopupToViewport();
+                // Only adjust if popup is already open and stable
+                setTimeout(function() {
+                    if (!isAdjustingPopup) {
+                        adjustPopupToViewport();
+                    }
+                }, 100);
             });
             
             // Adjust popup when window is resized
             window.addEventListener('resize', function() {
-                adjustPopupToViewport();
+                setTimeout(function() {
+                    if (!isAdjustingPopup) {
+                        adjustPopupToViewport();
+                    }
+                }, 100);
             });
             
             // Adjust popup when it opens
-            map.on('popupopen', function() {
+            map.on('popupopen', function(e) {
                 // Small delay to ensure popup is fully rendered
                 setTimeout(function() {
-                    adjustPopupToViewport();
-                }, 50);
+                    if (!isAdjustingPopup) {
+                        adjustPopupToViewport();
+                    }
+                }, 150);
+            });
+            
+            // Prevent popup from closing when map moves during adjustments
+            map.on('popupclose', function(e) {
+                // If we're adjusting, reopen the popup
+                if (isAdjustingPopup && e.popup && e.popup._source) {
+                    setTimeout(function() {
+                        var marker = e.popup._source;
+                        if (marker && marker._popupShouldStayOpen && !marker.isPopupOpen()) {
+                            marker.openPopup();
+                        }
+                    }, 100);
+                }
             });
             
             // Load Berlin city boundary
             loadBerlinBoundary();
         }
         
+        // Track if we're currently adjusting popup to prevent recursive calls
+        var isAdjustingPopup = false;
+        
         // Adjust popup position to stay within visible map bounds
         function adjustPopupToViewport() {
-            if (!map) return;
+            if (!map || isAdjustingPopup) return;
             
             var mapContainer = document.getElementById('map');
             if (!mapContainer) return;
@@ -1370,28 +1405,48 @@
                             var lngPerPixel = (ne.lng - sw.lng) / mapWidth;
                             var latPerPixel = (ne.lat - sw.lat) / mapHeight;
                             
-                            // Check if popup extends beyond map boundaries
-                            if (popupRect.right > mapRect.right) {
-                                adjustLng = (popupRect.right - mapRect.right) * lngPerPixel;
+                            // Check if popup extends beyond map boundaries (with some tolerance)
+                            var tolerance = 10; // pixels
+                            if (popupRect.right > mapRect.right + tolerance) {
+                                adjustLng = (popupRect.right - mapRect.right - tolerance) * lngPerPixel;
                                 needsAdjustment = true;
                             }
-                            if (popupRect.left < mapRect.left) {
-                                adjustLng = -(mapRect.left - popupRect.left) * lngPerPixel;
+                            if (popupRect.left < mapRect.left - tolerance) {
+                                adjustLng = -(mapRect.left - popupRect.left + tolerance) * lngPerPixel;
                                 needsAdjustment = true;
                             }
-                            if (popupRect.top < mapRect.top) {
-                                adjustLat = (mapRect.top - popupRect.top) * latPerPixel;
+                            if (popupRect.top < mapRect.top - tolerance) {
+                                adjustLat = (mapRect.top - popupRect.top + tolerance) * latPerPixel;
                                 needsAdjustment = true;
                             }
-                            if (popupRect.bottom > mapRect.bottom) {
-                                adjustLat = -(popupRect.bottom - mapRect.bottom) * latPerPixel;
+                            if (popupRect.bottom > mapRect.bottom + tolerance) {
+                                adjustLat = -(popupRect.bottom - mapRect.bottom - tolerance) * latPerPixel;
                                 needsAdjustment = true;
                             }
                             
                             // Adjust map pan if popup is outside bounds
                             if (needsAdjustment) {
+                                isAdjustingPopup = true;
+                                
+                                // Store the marker reference to reopen popup after pan
+                                var marker = layer;
+                                var wasOpen = marker.isPopupOpen && marker.isPopupOpen();
+                                
                                 var currentCenter = map.getCenter();
-                                map.panTo([currentCenter.lat + adjustLat, currentCenter.lng + adjustLng], { animate: false });
+                                map.panTo([currentCenter.lat + adjustLat, currentCenter.lng + adjustLng], { 
+                                    animate: false,
+                                    duration: 0
+                                });
+                                
+                                // Ensure popup stays open after pan
+                                setTimeout(function() {
+                                    if (marker && wasOpen) {
+                                        if (!marker.isPopupOpen || !marker.isPopupOpen()) {
+                                            marker.openPopup();
+                                        }
+                                    }
+                                    isAdjustingPopup = false;
+                                }, 100);
                             }
                         }
                     }
@@ -1765,12 +1820,31 @@
                 // When marker is clicked or its popup opens, only sync sidebar.
                 // We do NOT recenter/zoom the map here to avoid interfering with
                 // MarkerCluster behavior (which could recluster and close popups).
-                marker.on('click', function() {
+                marker.on('click', function(e) {
                     highlightMarketInSidebar(market.id);
+                    // Ensure popup stays open after click
+                    setTimeout(function() {
+                        if (marker && !marker.isPopupOpen()) {
+                            marker.openPopup();
+                        }
+                    }, 100);
                 });
                 
                 marker.on('popupopen', function() {
                     highlightMarketInSidebar(market.id);
+                    // Store reference to keep popup open
+                    marker._popupShouldStayOpen = true;
+                });
+                
+                marker.on('popupclose', function() {
+                    // If popup should stay open, reopen it
+                    if (marker._popupShouldStayOpen && !isAdjustingPopup) {
+                        setTimeout(function() {
+                            if (marker && !marker.isPopupOpen()) {
+                                marker.openPopup();
+                            }
+                        }, 50);
+                    }
                 });
                 
                 markers.push(marker);
