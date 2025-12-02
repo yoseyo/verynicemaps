@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Interactive map of all Christmas markets in Berlin 2025 - Mobile optimized">
     <title>Berlin Christmas Markets 2025</title>
+    
+    <!-- Mobile Optimizations -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Christmas Markets">
+    <meta name="theme-color" content="#2f3a2d">
+    <meta name="format-detection" content="telephone=no">
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,11 +28,19 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
         
         html, body {
             height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
             overflow: hidden;
+            position: fixed;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Snowfall */
@@ -64,13 +81,17 @@
             background: linear-gradient(135deg, #2a3328 0%, #3d4a3a 30%, #2f3a2d 70%, #1f251d 100%);
             background-attachment: fixed;
             color: #e8ede6;
-            overflow-x: hidden;
+            overflow: hidden;
             font-weight: 400;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             display: flex;
             flex-direction: column;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: pan-x pan-y;
         }
         
         .header {
@@ -144,74 +165,105 @@
             min-height: 0;
             overflow: hidden;
             position: relative;
+            flex-direction: column;
         }
         
         #map {
             flex: 1;
             height: 100%;
+            width: 100%;
+            position: relative;
+            touch-action: pan-x pan-y;
+        }
+        
+        .leaflet-container {
+            height: 100%;
+            width: 100%;
+            touch-action: pan-x pan-y;
         }
         
         .sidebar {
-            width: 350px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            max-height: 85vh;
             background: linear-gradient(180deg, rgba(42, 51, 40, 0.98) 0%, rgba(31, 37, 29, 0.98) 100%);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            border-left: 1px solid rgba(132, 152, 130, 0.2);
-            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
-            position: relative;
-            transition: transform 0.3s ease, width 0.3s ease;
+            border-top: 2px solid rgba(132, 152, 130, 0.3);
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+            border-radius: 20px 20px 0 0;
         }
         
-        .sidebar.hidden {
-            transform: translateX(100%);
-            width: 0;
-            padding: 0;
-            border-left: none;
-            overflow: hidden;
+        .sidebar.collapsed {
+            transform: translateY(calc(100% - 80px));
+        }
+        
+        .sidebar.expanded {
+            transform: translateY(0);
         }
         
         .sidebar-toggle {
             position: absolute;
-            right: 0;
-            top: 20px;
-            width: 40px;
-            height: 40px;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 50px;
+            min-height: 44px;
+            min-width: 44px;
             background: linear-gradient(135deg, rgba(42, 51, 40, 0.95) 0%, rgba(31, 37, 29, 0.95) 100%);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(132, 152, 130, 0.3);
-            border-right: none;
-            border-radius: 8px 0 0 8px;
+            border: 2px solid rgba(132, 152, 130, 0.3);
+            border-bottom: none;
+            border-radius: 20px 20px 0 0;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #aabaa6;
-            font-size: 18px;
+            font-size: 24px;
             transition: all 0.3s ease;
-            z-index: 1000;
-            box-shadow: -2px 0 12px rgba(0, 0, 0, 0.4);
+            z-index: 1001;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.4);
+            touch-action: manipulation;
         }
         
-        .sidebar.hidden ~ .sidebar-toggle {
-            right: 0;
-            border-radius: 0 8px 8px 0;
-            border-left: 1px solid rgba(132, 152, 130, 0.3);
-            border-right: none;
-        }
-        
-        .sidebar-toggle:hover {
+        .sidebar-toggle:active {
+            transform: translateX(-50%) scale(0.95);
             background: linear-gradient(135deg, rgba(60, 72, 58, 0.95) 0%, rgba(50, 60, 48, 0.95) 100%);
-            color: #e8ede6;
-            border-color: rgba(161, 48, 76, 0.5);
         }
         
         .sidebar-toggle .arrow {
-            transition: all 0.3s ease;
+            transition: transform 0.3s ease;
             display: inline-block;
+        }
+        
+        .sidebar-toggle .arrow.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .sidebar-handle {
+            width: 50px;
+            height: 5px;
+            background: rgba(132, 152, 130, 0.5);
+            border-radius: 3px;
+            margin: 12px auto;
+            cursor: grab;
+            touch-action: none;
+        }
+        
+        .sidebar-handle:active {
+            cursor: grabbing;
         }
         
         .sidebar::before {
@@ -258,6 +310,13 @@
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(170, 186, 166, 0.1);
             position: relative;
             overflow: hidden;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        
+        .market-card:active {
+            transform: scale(0.98);
+            background: linear-gradient(135deg, rgba(60, 72, 58, 0.95) 0%, rgba(50, 60, 48, 0.95) 100%);
         }
         
         .market-card::before {
@@ -428,6 +487,8 @@
             overflow-x: hidden;
             padding: 20px;
             padding-top: 10px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
         }
         
         .search-section h3, .date-filter-section h3 {
@@ -440,15 +501,19 @@
         
         .search-input, .date-input {
             width: 100%;
-            padding: 10px 12px;
+            padding: 14px 16px;
+            min-height: 44px;
             background: rgba(42, 51, 40, 0.6);
             border: 1px solid rgba(132, 152, 130, 0.3);
             border-radius: 8px;
             color: #e8ede6;
-            font-size: 0.9em;
+            font-size: 16px;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             transition: all 0.3s ease;
             box-sizing: border-box;
+            -webkit-appearance: none;
+            appearance: none;
+            touch-action: manipulation;
         }
         
         .search-input:focus, .date-input:focus {
@@ -470,7 +535,8 @@
         
         .date-filter-btn {
             flex: 1;
-            padding: 8px 12px;
+            padding: 12px 16px;
+            min-height: 44px;
             background: rgba(132, 152, 130, 0.2);
             border: 1px solid rgba(132, 152, 130, 0.3);
             border-radius: 6px;
@@ -479,14 +545,11 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             cursor: pointer;
             transition: all 0.3s ease;
-        }
-        
-        .date-filter-btn:hover {
-            background: rgba(132, 152, 130, 0.3);
-            border-color: rgba(132, 152, 130, 0.5);
+            touch-action: manipulation;
         }
         
         .date-filter-btn:active {
+            transform: scale(0.95);
             background: rgba(161, 48, 76, 0.3);
             border-color: rgba(161, 48, 76, 0.5);
         }
@@ -508,10 +571,12 @@
             transform: translateY(-50%);
             border: none;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 32px;
+            height: 32px;
+            min-width: 44px;
+            min-height: 44px;
             color: #040d00;
-            font-size: 20px;
+            font-size: 24px;
             line-height: 1;
             cursor: pointer;
             display: flex;
@@ -520,6 +585,12 @@
             transition: all 0.2s ease;
             z-index: 10;
             padding: 0;
+            touch-action: manipulation;
+            background: rgba(42, 51, 40, 0.8);
+        }
+        
+        .clear-search-btn:active {
+            transform: translateY(-50%) scale(0.9);
         }
         
         
@@ -695,7 +766,9 @@
         }
         
         .filter-btn {
-            padding: 6px 14px;
+            padding: 10px 16px;
+            min-height: 44px;
+            min-width: 44px;
             border: 1px solid rgba(132, 152, 130, 0.3);
             border-radius: 6px;
             cursor: pointer;
@@ -708,13 +781,13 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
             text-transform: uppercase;
             font-family: 'Space Grotesk', sans-serif;
+            touch-action: manipulation;
         }
         
-        .filter-btn:hover {
-            transform: translateY(-1px);
+        .filter-btn:active {
+            transform: scale(0.95);
             background: rgba(60, 72, 58, 0.9);
             border-color: rgba(132, 152, 130, 0.5);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
             color: #e8ede6;
         }
         
@@ -881,87 +954,73 @@
             letter-spacing: -2px;
         }
         
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                flex: 1;
-                min-height: 0;
-            }
-            
-            .sidebar-toggle {
-                right: 10px;
-                top: 10px;
-                width: 36px;
-                height: 36px;
-                font-size: 16px;
-            }
-            
-            .sidebar {
-                width: 100%;
-                flex: 0 0 50%;
-                min-height: 0;
-                border-left: none;
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-            
-            #map {
-                flex: 0 0 50%;
-                min-height: 0;
-            }
-            
-            .header {
-                padding: 12px 15px 10px 15px;
-            }
-            
-            .header h1 {
-                font-size: 1.6em;
-                margin-bottom: 4px;
-            }
-            
-            .header p {
-                font-size: 0.65em;
-                margin-bottom: 10px;
-            }
-            
-            .header #filter-buttons {
-                gap: 4px;
-            }
-            
-            .filter-btn {
-                padding: 5px 10px;
-                font-size: 0.65em;
-            }
-            
-            .weather-widget {
-                bottom: 12px;
-                left: 12px;
-                min-width: 240px;
-                padding: 16px;
-            }
-            
-            .weather-widget h3 {
-                font-size: 0.9em;
-            }
-            
-            .weather-icon {
-                font-size: 2.2em;
-                margin-right: 12px;
-            }
-            
-            .weather-temp {
-                font-size: 1.8em;
-            }
-            
-            .stats-number {
-                font-size: 2.5em;
-            }
-            
-            .market-card {
-                padding: 16px;
-            }
+        /* Mobile-specific optimizations */
+        .header {
+            padding: 12px 15px 10px 15px;
+            flex-shrink: 0;
+        }
+        
+        .header h1 {
+            font-size: 1.4em;
+            margin-bottom: 4px;
+        }
+        
+        .header p {
+            font-size: 0.65em;
+            margin-bottom: 10px;
+        }
+        
+        .header #filter-buttons {
+            gap: 6px;
+        }
+        
+        .filter-btn {
+            padding: 8px 12px;
+            font-size: 0.65em;
+        }
+        
+        .weather-widget {
+            bottom: 20px;
+            left: 12px;
+            right: 12px;
+            min-width: auto;
+            max-width: 300px;
+            padding: 12px;
+        }
+        
+        .weather-widget h3 {
+            font-size: 0.8em;
+        }
+        
+        .weather-icon {
+            font-size: 2em;
+            margin-right: 10px;
+        }
+        
+        .weather-temp {
+            font-size: 1.6em;
+        }
+        
+        .stats-number {
+            font-size: 2.5em;
+        }
+        
+        .market-card {
+            padding: 16px;
+        }
+        
+        .sidebar-filters {
+            padding: 16px;
+        }
+        
+        .search-section, .date-filter-section {
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+        }
+        
+        .autocomplete-item {
+            padding: 14px 15px;
+            min-height: 44px;
         }
     </style>
 </head>
@@ -993,10 +1052,11 @@
         <div id="map"></div>
         
         <div class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">
-            <span class="arrow">▶</span>
-            </div>
+            <span class="arrow">▲</span>
+        </div>
             
-        <div class="sidebar" id="sidebar">
+        <div class="sidebar collapsed" id="sidebar">
+            <div class="sidebar-handle" id="sidebar-handle"></div>
             <div class="sidebar-filters">
                 <div class="search-section">
                     <h3>Search Address</h3>
@@ -1053,20 +1113,23 @@
         var searchRadius = 2; // Search radius in kilometers
         var focusedMarketId = null; // Track currently focused market ID
         
-        // Sidebar toggle functionality
-        function initSidebarToggle() {
+        // Sidebar toggle functionality for mobile bottom drawer
+        var sidebarExpanded = false;
+        
+        function updateSidebarState() {
             var sidebar = document.getElementById('sidebar');
-            var toggleBtn = document.getElementById('sidebar-toggle');
-            var arrow = toggleBtn.querySelector('.arrow');
-            
-            toggleBtn.addEventListener('click', function() {
-                var isHidden = sidebar.classList.toggle('hidden');
-                
-                // Update arrow direction based on sidebar state
-                if (isHidden) {
-                    arrow.textContent = '◀'; // Point right when hidden (to show)
+            var arrow = document.querySelector('.sidebar-toggle .arrow');
+            if (sidebar && arrow) {
+                if (sidebarExpanded) {
+                    sidebar.classList.remove('collapsed');
+                    sidebar.classList.add('expanded');
+                    arrow.textContent = '▼';
+                    arrow.classList.add('rotated');
                 } else {
-                    arrow.textContent = '▶'; // Point left when visible (to hide)
+                    sidebar.classList.remove('expanded');
+                    sidebar.classList.add('collapsed');
+                    arrow.textContent = '▲';
+                    arrow.classList.remove('rotated');
                 }
                 
                 // Trigger map resize after sidebar animation
@@ -1075,7 +1138,73 @@
                         map.invalidateSize();
                     }
                 }, 300);
-            });
+            }
+        }
+        
+        function initSidebarToggle() {
+            var sidebar = document.getElementById('sidebar');
+            var toggleBtn = document.getElementById('sidebar-toggle');
+            var sidebarHandle = document.getElementById('sidebar-handle');
+            var arrow = toggleBtn.querySelector('.arrow');
+            
+            function toggleSidebar() {
+                sidebarExpanded = !sidebarExpanded;
+                updateSidebarState();
+            }
+            
+            // Toggle on button click
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+            
+            // Toggle on handle click/drag
+            if (sidebarHandle) {
+                sidebarHandle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    toggleSidebar();
+                });
+            }
+            
+            // Swipe gesture support for sidebar
+            var touchStartY = 0;
+            var touchStartTime = 0;
+            var sidebarElement = sidebar;
+            
+            sidebarElement.addEventListener('touchstart', function(e) {
+                touchStartY = e.touches[0].clientY;
+                touchStartTime = Date.now();
+            }, { passive: true });
+            
+            sidebarElement.addEventListener('touchmove', function(e) {
+                if (sidebarExpanded) {
+                    var currentY = e.touches[0].clientY;
+                    var deltaY = currentY - touchStartY;
+                    
+                    // Only allow downward swipe when expanded
+                    if (deltaY > 0) {
+                        var translateY = Math.min(deltaY, 100);
+                        sidebar.style.transform = 'translateY(' + translateY + 'px)';
+                    }
+                }
+            }, { passive: true });
+            
+            sidebarElement.addEventListener('touchend', function(e) {
+                var touchEndY = e.changedTouches[0].clientY;
+                var deltaY = touchEndY - touchStartY;
+                var deltaTime = Date.now() - touchStartTime;
+                var velocity = Math.abs(deltaY) / deltaTime;
+                
+                // Reset transform
+                sidebar.style.transform = '';
+                
+                // If swiped down significantly or with high velocity, collapse
+                if (sidebarExpanded && (deltaY > 50 || (deltaY > 20 && velocity > 0.3))) {
+                    toggleSidebar();
+                }
+            }, { passive: true });
         }
         
         // Initialize map centered on Berlin
@@ -1654,15 +1783,28 @@
                     // Target zoom level
                     var targetZoom = 14;
                     
-                    // Calculate offset to account for sidebar (check if sidebar is visible)
-                    var sidebar = document.getElementById('sidebar');
-                    var sidebarWidth = (window.innerWidth > 768 && sidebar && !sidebar.classList.contains('hidden')) ? 350 : 0;
+                    // Close sidebar when market is selected (mobile behavior)
+                    if (sidebarExpanded) {
+                        sidebarExpanded = false;
+                        var sidebar = document.getElementById('sidebar');
+                        var arrow = document.querySelector('.sidebar-toggle .arrow');
+                        if (sidebar) {
+                            sidebar.classList.remove('expanded');
+                            sidebar.classList.add('collapsed');
+                        }
+                        if (arrow) {
+                            arrow.textContent = '▲';
+                            arrow.classList.remove('rotated');
+                        }
+                    }
+                    
+                    // Calculate offset (no sidebar offset on mobile)
                     var mapContainer = document.getElementById('map');
                     var mapWidth = mapContainer.offsetWidth;
                     var mapHeight = mapContainer.offsetHeight;
                     
-                    // Calculate the center point of the visible map area (accounting for sidebar)
-                    var visibleCenterX = sidebarWidth + (mapWidth - sidebarWidth) / 2;
+                    // Calculate the center point of the visible map area
+                    var visibleCenterX = mapWidth / 2;
                     var visibleCenterY = mapHeight / 2;
                     
                     // Estimate popup size and position (popup appears to right/bottom of marker)
@@ -2607,6 +2749,22 @@
                 allButton.addEventListener('click', function() {
                     filterMarkets('all', this);
                 });
+            }
+        });
+        
+        // Handle orientation changes
+        window.addEventListener('orientationchange', function() {
+            setTimeout(function() {
+                if (map) {
+                    map.invalidateSize();
+                }
+            }, 100);
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (map) {
+                map.invalidateSize();
             }
         });
     </script>
