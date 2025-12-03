@@ -830,9 +830,8 @@
         }
         
         
-        /* Weather Widget */
-        /* Weather Widget - Fixed in bottom left (desktop only) */
-        .desktop-weather {
+        /* Weather Widget - Responsive */
+        .weather-widget {
             position: fixed;
             bottom: 10px;
             left: 10px;
@@ -848,15 +847,9 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .desktop-weather:hover {
+        .weather-widget:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(170, 186, 166, 0.2);
-        }
-        
-        @media (max-width: 768px) {
-            .desktop-weather {
-                display: none;
-            }
         }
         
         .weather-widget h3 {
@@ -926,24 +919,6 @@
                 flex-shrink: 0;
             }
             
-            .header-top {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 8px;
-            }
-            
-            .header-title-section {
-                flex: 1;
-                text-align: left;
-                min-width: 0;
-            }
-            
-            .header-weather-section {
-                flex-shrink: 0;
-                margin-left: 10px;
-            }
-            
             .header h1 {
                 font-size: 0.95em;
                 margin-bottom: 2px;
@@ -969,6 +944,49 @@
                 font-size: 0.55em;
                 min-height: 28px;
                 flex-shrink: 0;
+            }
+            
+            .weather-widget {
+                position: fixed;
+                bottom: 10px;
+                left: 10px;
+                background: linear-gradient(135deg, rgba(42, 51, 40, 0.95) 0%, rgba(31, 37, 29, 0.95) 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                padding: 6px 8px;
+                border-radius: 8px;
+                border: 1px solid rgba(132, 152, 130, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                z-index: 600;
+                min-width: auto;
+            }
+            
+            .weather-widget h3 {
+                display: none;
+            }
+            
+            .weather-content {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            
+            .weather-icon {
+                font-size: 1.2em;
+                margin-right: 0;
+            }
+            
+            .weather-info {
+                display: none;
+            }
+            
+            .weather-temp {
+                font-size: 1.1em;
+                font-weight: 600;
+            }
+            
+            .weather-location, .weather-desc {
+                display: none;
             }
             
             .sidebar-toggle {
@@ -1041,49 +1059,6 @@
                 min-height: 0;
             }
             
-            .weather-widget {
-                position: static;
-                background: none;
-                backdrop-filter: none;
-                -webkit-backdrop-filter: none;
-                padding: 0;
-                border: none;
-                box-shadow: none;
-                min-width: auto;
-                max-width: none;
-                display: flex;
-                align-items: center;
-                color: #e8ede6;
-                font-size: 0.8em;
-            }
-            
-            .weather-widget h3 {
-                display: none;
-            }
-            
-            .weather-content {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-            }
-            
-            .weather-icon {
-                font-size: 1.2em;
-                margin-right: 4px;
-            }
-            
-            .weather-temp {
-                font-size: 1.1em;
-                font-weight: 600;
-            }
-            
-            .weather-location, .weather-desc {
-                display: none;
-            }
-            
-            .weather-info {
-                display: none;
-            }
             
             .leaflet-popup-content-wrapper {
                 max-width: 90vw;
@@ -1159,20 +1134,8 @@
     <div class="snowflake">❅</div>
 
     <div class="header">
-        <div class="header-top">
-            <div class="header-title-section">
-                <h1>Berlin Christmas Markets 2025</h1>
-                <p>Explore the markets across Berlin</p>
-            </div>
-            <div class="header-weather-section">
-                <div class="weather-widget">
-                    <h3>🌡️ Weather in Berlin</h3>
-                    <div id="weather" class="weather-content">
-                        <div class="loading">Loading weather...</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <h1>Berlin Christmas Markets 2025</h1>
+        <p>Explore the markets across Berlin</p>
         <div class="filter-section">
             <h3>Filter by Area</h3>
             <div id="filter-buttons">
@@ -1216,10 +1179,10 @@
         </div>
     </div>
     
-    <!-- Weather Widget - Fixed in bottom left (desktop only) -->
-    <div class="weather-widget desktop-weather">
+    <!-- Weather Widget - Responsive (bottom-left on desktop, compact on mobile) -->
+    <div class="weather-widget">
         <h3>🌡️ Weather in Berlin</h3>
-        <div id="weather-desktop" class="weather-content">
+        <div id="weather" class="weather-content">
             <div class="loading">Loading weather...</div>
         </div>
     </div>
@@ -1342,6 +1305,7 @@
             // Handle window resize
             window.addEventListener('resize', function() {
                 updateSidebarState();
+                updateWeatherDisplay(); // Update weather display format on resize
                 if (map) {
                     setTimeout(function() {
                         map.invalidateSize();
@@ -2424,6 +2388,37 @@
             });
         }
         
+        // Store weather data for responsive updates
+        var currentWeatherData = null;
+        
+        // Update weather display based on screen size
+        function updateWeatherDisplay() {
+            if (!currentWeatherData) return;
+            
+            var weatherEl = document.getElementById('weather');
+            if (!weatherEl) return;
+            
+            var temp = currentWeatherData.temp;
+            var weatherDesc = currentWeatherData.desc;
+            var weatherIcon = currentWeatherData.icon;
+            
+            if (window.innerWidth <= 768) {
+                // Mobile: compact view (icon + temp only)
+                weatherEl.innerHTML = 
+                    '<div class="weather-icon">' + weatherIcon + '</div>' +
+                    '<div class="weather-temp">' + temp + '°C</div>';
+            } else {
+                // Desktop: full view (icon + info + temp)
+                weatherEl.innerHTML = 
+                    '<div class="weather-icon">' + weatherIcon + '</div>' +
+                    '<div class="weather-info">' +
+                        '<div class="weather-location">Berlin</div>' +
+                        '<div class="weather-desc">' + weatherDesc + '</div>' +
+                    '</div>' +
+                    '<div class="weather-temp">' + temp + '°C</div>';
+            }
+        }
+        
         // Fetch Weather for Berlin
         function fetchWeather() {
             fetch('https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.405&current=temperature_2m,is_day,weather_code')
@@ -2436,36 +2431,23 @@
                     var isDay = data.current.is_day === 1;
                     var weatherIcon = getWeatherIcon(data.current.weather_code, isDay);
                     
-                    // Update desktop weather widget
-                    var desktopWeather = document.getElementById('weather-desktop');
-                    if (desktopWeather) {
-                        desktopWeather.innerHTML = 
-                            '<div class="weather-icon">' + weatherIcon + '</div>' +
-                            '<div class="weather-info">' +
-                                '<div class="weather-location">Berlin</div>' +
-                                '<div class="weather-desc">' + weatherDesc + '</div>' +
-                            '</div>' +
-                            '<div class="weather-temp">' + temp + '°C</div>';
-                    }
+                    // Store weather data
+                    currentWeatherData = {
+                        temp: temp,
+                        desc: weatherDesc,
+                        icon: weatherIcon
+                    };
                     
-                    // Update mobile weather widget (in header)
-                    var mobileWeather = document.getElementById('weather');
-                    if (mobileWeather) {
-                        mobileWeather.innerHTML = 
-                            '<div class="weather-icon">' + weatherIcon + '</div>' +
-                            '<div class="weather-temp">' + temp + '°C</div>';
-                    }
+                    // Update display
+                    updateWeatherDisplay();
                 })
                 .catch(function() {
                     var errorMsg = '<div class="loading" style="color: #c41e3a;">Weather not available</div>';
-                    var desktopWeather = document.getElementById('weather-desktop');
-                    if (desktopWeather) {
-                        desktopWeather.innerHTML = errorMsg;
+                    var weatherEl = document.getElementById('weather');
+                    if (weatherEl) {
+                        weatherEl.innerHTML = errorMsg;
                     }
-                    var mobileWeather = document.getElementById('weather');
-                    if (mobileWeather) {
-                        mobileWeather.innerHTML = errorMsg;
-                    }
+                    currentWeatherData = null;
                 });
         }
         
