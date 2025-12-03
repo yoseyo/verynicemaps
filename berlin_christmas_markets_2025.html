@@ -846,7 +846,7 @@
         
         .weather-icon {
             font-size: 2.5em;
-            margin-right: 8px;
+            margin-right: 4px;
             filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
             opacity: 0.9;
         }
@@ -1624,19 +1624,21 @@
             });
             
             if (market) {
-                // Find the marker
+                // Verify market coordinates are valid
+                if (isNaN(market.lat) || isNaN(market.lng)) {
+                    console.error('Invalid market coordinates:', market);
+                    return;
+                }
+                
+                // Find the marker in current filtered markers
                 var marker = markers.find(function(m) {
                     return m.marketId === marketId;
                 });
                 
-                if (marker) {
-                    // Verify market coordinates are valid
-                    if (isNaN(market.lat) || isNaN(market.lng)) {
-                        console.error('Invalid market coordinates:', market);
-                        return;
-                    }
-                    
-                    // Automatically select the district filter and draw boundary (without fitting bounds)
+                // If marker not found, it might be filtered out - ensure it's visible
+                if (!marker) {
+                    // Clear filters that might hide this market
+                    // First, ensure the district filter includes this market
                     if (market.district) {
                         var districtButton = document.querySelector('.filter-btn[data-filter="' + market.district + '"]');
                         if (districtButton) {
@@ -1649,57 +1651,133 @@
                             // Load and draw district boundary without fitting bounds
                             loadDistrictBoundary(market.district, false);
                         }
+                    } else {
+                        // If no district, select "All"
+                        var allButton = document.querySelector('.filter-btn[data-filter="all"]');
+                        if (allButton) {
+                            document.querySelectorAll('.filter-btn').forEach(function(btn) {
+                                btn.classList.remove('active');
+                            });
+                            allButton.classList.add('active');
+                            if (districtBoundaryLayer) {
+                                map.removeLayer(districtBoundaryLayer);
+                                districtBoundaryLayer = null;
+                            }
+                        }
                     }
                     
-                    // Target zoom level
-                    var targetZoom = 14;
+                    // Clear search location to ensure market is visible
+                    if (searchLocation) {
+                        searchLocation = null;
+                        if (searchMarker) {
+                            map.removeLayer(searchMarker);
+                            if (searchMarker.radiusCircle) {
+                                map.removeLayer(searchMarker.radiusCircle);
+                            }
+                            searchMarker = null;
+                        }
+                    }
                     
-                    // Calculate offset to account for sidebar (check if sidebar is visible)
-                    var sidebar = document.getElementById('sidebar');
-                    var sidebarWidth = (window.innerWidth > 768 && sidebar && !sidebar.classList.contains('hidden')) ? 350 : 0;
-                    var mapContainer = document.getElementById('map');
-                    var mapWidth = mapContainer.offsetWidth;
-                    var mapHeight = mapContainer.offsetHeight;
+                    // Clear date filter to ensure market is visible
+                    var dateInput = document.getElementById('date-filter');
+                    if (dateInput) {
+                        dateInput.value = '';
+                    }
+                    selectedDate = null;
                     
-                    // Calculate the center point of the visible map area (accounting for sidebar)
-                    var visibleCenterX = sidebarWidth + (mapWidth - sidebarWidth) / 2;
-                    var visibleCenterY = mapHeight / 2;
+                    // Reapply filters to show the market
+                    applyFilters();
                     
-                    // Estimate popup size and position (popup appears to right/bottom of marker)
-                    // Shift marker slightly left and up so popup is better centered
-                    var popupOffsetX = 160; // Half of typical popup width
-                    var popupOffsetY = 100;  // Half of typical popup height
-                    
-                    // Calculate desired container point for marker (accounting for popup offset)
-                    var desiredContainerX = visibleCenterX - popupOffsetX;
-                    var desiredContainerY = visibleCenterY - popupOffsetY;
-                    
-                    // Set view to market location first to establish correct projection
-                    map.setView([market.lat, market.lng], targetZoom, { animate: false });
-                    
-                    // Wait for map to update, then calculate and apply offset
+                    // Wait for markers to be added, then find the marker
                     setTimeout(function() {
-                        // Get marker's container point (should be at map center now)
-                        var markerPoint = map.latLngToContainerPoint([market.lat, market.lng]);
+                        marker = markers.find(function(m) {
+                            return m.marketId === marketId;
+                        });
                         
-                        // Calculate the difference between desired and current position
-                        var deltaX = desiredContainerX - markerPoint.x;
-                        var deltaY = desiredContainerY - markerPoint.y;
+                        if (marker) {
+                            // Continue with focusing logic
+                            focusMarketMarker(market, marker, marketId);
+                        } else {
+                            console.error('Market marker not found after filter adjustment:', marketId);
+                            // Fallback: just zoom to the market location
+                            map.setView([market.lat, market.lng], 14, { animate: true });
+                        }
+                    }, 100);
+                    return;
+                }
+                
+                // Marker found, proceed with focusing
+                focusMarketMarker(market, marker, marketId);
+            }
+        }
+        
+        // Helper function to focus on a market marker
+        function focusMarketMarker(market, marker, marketId) {
+            if (marker) {
+                // Automatically select the district filter and draw boundary (without fitting bounds)
+                if (market.district) {
+                    var districtButton = document.querySelector('.filter-btn[data-filter="' + market.district + '"]');
+                    if (districtButton) {
+                        // Remove active class from all buttons
+                        document.querySelectorAll('.filter-btn').forEach(function(btn) {
+                            btn.classList.remove('active');
+                        });
+                        // Add active class to district button
+                        districtButton.classList.add('active');
+                        // Load and draw district boundary without fitting bounds
+                        loadDistrictBoundary(market.district, false);
+                    }
+                }
+                
+                // Target zoom level
+                var targetZoom = 14;
+                
+                // Calculate offset to account for sidebar (check if sidebar is visible)
+                var sidebar = document.getElementById('sidebar');
+                var sidebarWidth = (window.innerWidth > 768 && sidebar && !sidebar.classList.contains('hidden')) ? 350 : 0;
+                var mapContainer = document.getElementById('map');
+                var mapWidth = mapContainer.offsetWidth;
+                var mapHeight = mapContainer.offsetHeight;
+                
+                // Calculate the center point of the visible map area (accounting for sidebar)
+                var visibleCenterX = sidebarWidth + (mapWidth - sidebarWidth) / 2;
+                var visibleCenterY = mapHeight / 2;
+                
+                // Estimate popup size and position (popup appears to right/bottom of marker)
+                // Shift marker slightly left and up so popup is better centered
+                var popupOffsetX = 160; // Half of typical popup width
+                var popupOffsetY = 100;  // Half of typical popup height
+                
+                // Calculate desired container point for marker (accounting for popup offset)
+                var desiredContainerX = visibleCenterX - popupOffsetX;
+                var desiredContainerY = visibleCenterY - popupOffsetY;
+                
+                // Set view to market location first to establish correct projection
+                map.setView([market.lat, market.lng], targetZoom, { animate: false });
+                
+                // Wait for map to update, then calculate and apply offset
+                setTimeout(function() {
+                    // Get marker's container point (should be at map center now)
+                    var markerPoint = map.latLngToContainerPoint([market.lat, market.lng]);
+                    
+                    // Calculate the difference between desired and current position
+                    var deltaX = desiredContainerX - markerPoint.x;
+                    var deltaY = desiredContainerY - markerPoint.y;
+                    
+                    // If offset is significant, apply it
+                    if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
+                        // Convert pixel delta to lat/lng delta using Leaflet's projection
+                        var currentCenter = map.getCenter();
+                        var centerPoint = map.latLngToContainerPoint(currentCenter);
+                        var offsetPoint = L.point(centerPoint.x + deltaX, centerPoint.y + deltaY);
+                        var targetCenter = map.containerPointToLatLng(offsetPoint);
                         
-                        // If offset is significant, apply it
-                        if (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5) {
-                            // Convert pixel delta to lat/lng delta using Leaflet's projection
-                            var currentCenter = map.getCenter();
-                            var centerPoint = map.latLngToContainerPoint(currentCenter);
-                            var offsetPoint = L.point(centerPoint.x + deltaX, centerPoint.y + deltaY);
-                            var targetCenter = map.containerPointToLatLng(offsetPoint);
-                            
-                            // Apply offset with animation
-                            map.setView(targetCenter, targetZoom, { animate: true });
-                            
-                            // Wait for animation to complete, then open popup
-                            setTimeout(function() {
-                    marker.openPopup();
+                        // Apply offset with animation
+                        map.setView(targetCenter, targetZoom, { animate: true });
+                        
+                        // Wait for animation to complete, then open popup
+                        setTimeout(function() {
+                            marker.openPopup();
                                 
                                 // Ensure popup is visible and fits on page
                                 setTimeout(function() {
@@ -1812,18 +1890,17 @@
                             }
                         }
                     }, 100);
-                }
-                
-                // Update active card
-                document.querySelectorAll('.market-card').forEach(function(card) {
-                    card.classList.remove('active');
-                });
-                var activeCard = document.getElementById('card-' + marketId);
-                if (activeCard) {
-                    activeCard.classList.add('active');
+                    
+                    // Update active card
+                    document.querySelectorAll('.market-card').forEach(function(card) {
+                        card.classList.remove('active');
+                    });
+                    var activeCard = document.getElementById('card-' + marketId);
+                    if (activeCard) {
+                        activeCard.classList.add('active');
+                    }
                 }
             }
-        }
         
         // Parse date string to check if market is active on a given date
         function isMarketActiveOnDate(market, date) {
@@ -2078,7 +2155,8 @@
                 .then(function(data) {
                     var temp = Math.round(data.current.temperature_2m);
                     var weatherDesc = getWeatherDescription(data.current.weather_code);
-                    var weatherIcon = getWeatherIcon(data.current.weather_code);
+                    var isDay = data.current.is_day === 1;
+                    var weatherIcon = getWeatherIcon(data.current.weather_code, isDay);
                     
                     document.getElementById('weather').innerHTML = 
                         '<div class="weather-icon">' + weatherIcon + '</div>' +
@@ -2093,12 +2171,28 @@
                 });
         }
         
-        function getWeatherIcon(code) {
-            if (code === 0) return '☀️';
-            if (code < 4) return '⛅';
-            if (code < 50) return '☁️';
-            if (code < 70) return '🌧️';
-            if (code < 80) return '❄️';
+        function getWeatherIcon(code, isDay) {
+            // Clear sky
+            if (code === 0) {
+                return isDay ? '☀️' : '🌙';
+            }
+            // Partly cloudy
+            if (code < 4) {
+                return isDay ? '⛅' : '☁️🌙';
+            }
+            // Cloudy/Fog
+            if (code < 50) {
+                return '☁️';
+            }
+            // Rain
+            if (code < 70) {
+                return '🌧️';
+            }
+            // Snow
+            if (code < 80) {
+                return '❄️';
+            }
+            // Thunderstorm
             return '⛈️';
         }
         
