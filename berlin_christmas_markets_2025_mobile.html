@@ -99,10 +99,29 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             padding: 16px 20px 12px 20px;
-            text-align: center;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
             border-bottom: 1px solid rgba(132, 152, 130, 0.2);
             position: relative;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        
+        .header-title-section {
+            flex: 1;
+            text-align: center;
+            min-width: 0;
+        }
+        
+        .header-weather-section {
             flex-shrink: 0;
         }
         
@@ -138,11 +157,11 @@
             position: relative;
             z-index: 1;
             text-transform: uppercase;
-            margin-bottom: 12px;
+            margin-bottom: 0;
         }
         
         .header .filter-section {
-            max-width: 1200px;
+            max-width: 1500px;
             margin: 0 auto;
             position: relative;
             z-index: 1;
@@ -155,7 +174,7 @@
         .header #filter-buttons {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
+            gap: 4px;
             justify-content: center;
         }
         
@@ -188,7 +207,7 @@
             left: 0;
             right: 0;
             width: 100%;
-            max-height: 85vh;
+            max-height: 50vh;
             background: linear-gradient(180deg, rgba(42, 51, 40, 0.98) 0%, rgba(31, 37, 29, 0.98) 100%);
             backdrop-filter: blur(30px);
             -webkit-backdrop-filter: blur(30px);
@@ -204,7 +223,7 @@
         }
         
         .sidebar.collapsed {
-            transform: translateY(calc(100% - 50px));
+            transform: translateY(calc(80% - 50px));
         }
         
         .sidebar.expanded ~ .sidebar-toggle {
@@ -910,92 +929,59 @@
         }
         
         
-        /* Weather Widget */
-        /* Weather Widget - Fixed in bottom left */
+        /* Weather Widget - Integrated in Header */
         .weather-widget {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: linear-gradient(135deg, rgba(42, 51, 40, 0.95) 0%, rgba(31, 37, 29, 0.95) 100%);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: 1px solid rgba(132, 152, 130, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(170, 186, 166, 0.1);
-            z-index: 1000;
-            min-width: 180px;
-            max-width: 220px;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .weather-widget:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(170, 186, 166, 0.2);
+            position: relative;
+            background: transparent;
+            padding: 0;
+            border: none;
+            box-shadow: none;
+            min-width: auto;
+            max-width: none;
+            z-index: 1;
         }
         
         .weather-widget h3 {
-            color: #e8ede6;
-            margin-bottom: 6px;
-            font-size: 0.65em;
-            font-weight: 700;
-            letter-spacing: 1px;
-            font-family: 'Space Grotesk', sans-serif;
-            text-transform: uppercase;
+            display: none;
         }
         
         .weather-content {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-end;
             color: #e8ede6;
-            gap: 8px;
+            gap: 6px;
         }
         
         .weather-icon {
-            font-size: 1.8em;
-            margin-right: 8px;
+            font-size: 1.4em;
             filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
             opacity: 0.9;
             flex-shrink: 0;
         }
         
         .weather-info {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        .weather-location {
-            font-weight: 600;
-            font-size: 0.75em;
-            color: #fff;
-            margin-bottom: 4px;
-            letter-spacing: 0.5px;
-            font-family: 'Space Grotesk', sans-serif;
-            text-transform: uppercase;
-        }
-        
-        .weather-desc {
-            font-size: 0.65em;
-            color: #888;
-            font-weight: 400;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
+            display: none;
         }
         
         .weather-temp {
-            font-size: 2em;
+            font-size: 1.2em;
             font-weight: 700;
             color: #fff;
             font-family: 'Space Grotesk', sans-serif;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
             flex-shrink: 0;
+            line-height: 1;
         }
         
         /* Mobile-specific optimizations */
         .header {
             padding: 6px 10px 4px 10px;
             flex-shrink: 0;
+        }
+        
+        .header-top {
+            margin-bottom: 4px;
         }
         
         .header h1 {
@@ -1025,36 +1011,15 @@
         }
         
         .weather-widget {
-            top: 12px;
-            right: 12px;
-            left: auto;
-            bottom: auto;
-            min-width: 160px;
-            max-width: 200px;
-            padding: 8px 10px;
-        }
-        
-        .weather-widget h3 {
-            font-size: 0.6em;
-            margin-bottom: 4px;
+            padding: 0;
         }
         
         .weather-icon {
-            font-size: 1.5em;
-            margin-right: 6px;
+            font-size: 1.2em;
         }
         
         .weather-temp {
-            font-size: 1.5em;
-        }
-        
-        .weather-location {
-            font-size: 0.7em;
-            margin-bottom: 2px;
-        }
-        
-        .weather-desc {
-            font-size: 0.6em;
+            font-size: 1em;
         }
         
         .stats-number {
@@ -1094,8 +1059,19 @@
     <div class="snowflake">❅</div>
 
     <div class="header">
-        <h1>Berlin Christmas Markets 2025</h1>
-        <p>Explore the markets across Berlin</p>
+        <div class="header-top">
+            <div class="header-title-section">
+                <h1>Berlin Christmas Markets 2025</h1>
+                <p>Explore the markets across Berlin</p>
+            </div>
+            <div class="header-weather-section">
+                <div class="weather-widget">
+                    <div id="weather" class="weather-content">
+                        <div class="loading">Loading weather...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="filter-section">
             <h3>Filter by Area</h3>
             <div id="filter-buttons">
@@ -1137,14 +1113,6 @@
             <div id="market-list">
                 <div class="loading">Loading markets...</div>
             </div>
-        </div>
-    </div>
-    
-    <!-- Weather Widget - Fixed in bottom left -->
-    <div class="weather-widget">
-        <h3>🌡️ Weather in Berlin</h3>
-        <div id="weather" class="weather-content">
-            <div class="loading">Loading weather...</div>
         </div>
     </div>
     
@@ -2351,10 +2319,6 @@
                     
                     document.getElementById('weather').innerHTML = 
                         '<div class="weather-icon">' + weatherIcon + '</div>' +
-                        '<div class="weather-info">' +
-                            '<div class="weather-location">Berlin</div>' +
-                            '<div class="weather-desc">' + weatherDesc + '</div>' +
-                        '</div>' +
                         '<div class="weather-temp">' + temp + '°C</div>';
                 })
                 .catch(function() {
