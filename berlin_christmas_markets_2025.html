@@ -2,8 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Interactive map of all Christmas markets in Berlin 2025">
     <title>Berlin Christmas Markets 2025</title>
+    
+    <!-- Mobile Optimizations -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Christmas Markets">
+    <meta name="theme-color" content="#2f3a2d">
+    <meta name="format-detection" content="telephone=no">
     
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,11 +28,19 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
         
         html, body {
             height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
             overflow: hidden;
+            position: fixed;
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
         }
 
         /* Snowfall */
@@ -71,6 +88,10 @@
             -moz-osx-font-smoothing: grayscale;
             display: flex;
             flex-direction: column;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            touch-action: pan-x pan-y;
         }
         
         .header {
@@ -149,6 +170,11 @@
         #map {
             flex: 1;
             height: 100%;
+            touch-action: pan-x pan-y;
+        }
+        
+        .leaflet-container {
+            touch-action: pan-x pan-y;
         }
         
         .sidebar {
@@ -805,8 +831,8 @@
         
         
         /* Weather Widget */
-        /* Weather Widget - Fixed in bottom left */
-        .weather-widget {
+        /* Weather Widget - Fixed in bottom left (desktop only) */
+        .desktop-weather {
             position: fixed;
             bottom: 10px;
             left: 10px;
@@ -822,9 +848,15 @@
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
-        .weather-widget:hover {
+        .desktop-weather:hover {
             transform: translateY(-4px);
             box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(170, 186, 166, 0.2);
+        }
+        
+        @media (max-width: 768px) {
+            .desktop-weather {
+                display: none;
+            }
         }
         
         .weather-widget h3 {
@@ -881,6 +913,7 @@
             letter-spacing: -2px;
         }
         
+        /* Mobile Responsive Styles */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -888,79 +921,226 @@
                 min-height: 0;
             }
             
-            .sidebar-toggle {
-                right: 10px;
-                top: 10px;
-                width: 36px;
-                height: 36px;
-                font-size: 16px;
-            }
-            
-            .sidebar {
-                width: 100%;
-                flex: 0 0 50%;
-                min-height: 0;
-                border-left: none;
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
-                display: flex;
-                flex-direction: column;
-                overflow: hidden;
-            }
-            
-            #map {
-                flex: 0 0 50%;
-                min-height: 0;
-            }
-            
             .header {
-                padding: 12px 15px 10px 15px;
+                padding: 6px 10px 4px 10px;
+                flex-shrink: 0;
+            }
+            
+            .header-top {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 8px;
+            }
+            
+            .header-title-section {
+                flex: 1;
+                text-align: left;
+                min-width: 0;
+            }
+            
+            .header-weather-section {
+                flex-shrink: 0;
+                margin-left: 10px;
             }
             
             .header h1 {
-                font-size: 1.6em;
-                margin-bottom: 4px;
+                font-size: 0.95em;
+                margin-bottom: 2px;
             }
             
             .header p {
-                font-size: 0.65em;
-                margin-bottom: 10px;
+                font-size: 0.55em;
+                margin-bottom: 6px;
             }
             
             .header #filter-buttons {
-                gap: 4px;
+                gap: 3px;
+                max-height: 50px;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                justify-content: flex-start;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 5px;
             }
             
             .filter-btn {
-                padding: 5px 10px;
-                font-size: 0.65em;
+                padding: 4px 8px;
+                font-size: 0.55em;
+                min-height: 28px;
+                flex-shrink: 0;
+            }
+            
+            .sidebar-toggle {
+                position: fixed;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 60px;
+                height: 50px;
+                min-height: 44px;
+                min-width: 44px;
+                background: linear-gradient(135deg, rgba(42, 51, 40, 0.95) 0%, rgba(31, 37, 29, 0.95) 100%);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 2px solid rgba(132, 152, 130, 0.3);
+                border-bottom: none;
+                border-radius: 20px 20px 0 0;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #aabaa6;
+                font-size: 18px;
+                transition: all 0.3s ease;
+                z-index: 1001;
+                box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.4);
+                touch-action: manipulation;
+                right: auto;
+                top: auto;
+            }
+            
+            .sidebar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                max-height: 90vh;
+                transform: translateY(calc(100% - 60px));
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                will-change: transform;
+                z-index: 1000;
+                background: linear-gradient(180deg, rgba(42, 51, 40, 0.98) 0%, rgba(31, 37, 29, 0.98) 100%);
+                backdrop-filter: blur(30px);
+                -webkit-backdrop-filter: blur(30px);
+                border-top: 1px solid rgba(132, 152, 130, 0.2);
+                box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.5);
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+                border-radius: 20px 20px 0 0;
+                border-left: none;
+                width: 100%;
+            }
+            
+            .sidebar.expanded {
+                transform: translateY(0);
+            }
+            
+            .sidebar.collapsed {
+                transform: translateY(calc(100% - 60px));
+            }
+            
+            .sidebar.expanded ~ .sidebar-toggle {
+                transform: translateY(-100%) translateX(-50%);
+            }
+            
+            #map {
+                flex: 1;
+                min-height: 0;
             }
             
             .weather-widget {
-                bottom: 12px;
-                left: 12px;
-                min-width: 240px;
-                padding: 16px;
+                position: static;
+                background: none;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                padding: 0;
+                border: none;
+                box-shadow: none;
+                min-width: auto;
+                max-width: none;
+                display: flex;
+                align-items: center;
+                color: #e8ede6;
+                font-size: 0.8em;
             }
             
             .weather-widget h3 {
-                font-size: 0.9em;
+                display: none;
+            }
+            
+            .weather-content {
+                display: flex;
+                align-items: center;
+                gap: 6px;
             }
             
             .weather-icon {
-                font-size: 2.2em;
-                margin-right: 12px;
+                font-size: 1.2em;
+                margin-right: 4px;
             }
             
             .weather-temp {
-                font-size: 1.8em;
+                font-size: 1.1em;
+                font-weight: 600;
             }
             
-            .stats-number {
-                font-size: 2.5em;
+            .weather-location, .weather-desc {
+                display: none;
+            }
+            
+            .weather-info {
+                display: none;
+            }
+            
+            .leaflet-popup-content-wrapper {
+                max-width: 90vw;
+                max-height: 50vh;
+            }
+            
+            .leaflet-popup-content {
+                margin: 12px;
+                font-size: 0.9em;
+            }
+            
+            .popup-title {
+                font-size: 1.2em;
+                margin-bottom: 10px;
+            }
+            
+            .popup-info {
+                font-size: 0.9em;
+                line-height: 1.6;
+            }
+            
+            .popup-info p {
+                margin-bottom: 8px;
+            }
+            
+            .popup-info strong {
+                font-size: 1em;
+            }
+            
+            .popup-link {
+                padding: 8px 16px;
+                font-size: 0.8em;
+                margin-top: 10px;
+            }
+            
+            .leaflet-popup-close-button {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 20px !important;
+                padding: 4px !important;
             }
             
             .market-card {
                 padding: 16px;
+                touch-action: manipulation;
+            }
+            
+            .market-card:active {
+                transform: scale(0.98);
+            }
+            
+            .search-input, .date-input, .date-filter-btn, .clear-search-btn {
+                touch-action: manipulation;
+            }
+            
+            .filter-btn:active {
+                transform: scale(0.95);
             }
         }
     </style>
@@ -979,8 +1159,20 @@
     <div class="snowflake">❅</div>
 
     <div class="header">
-        <h1>Berlin Christmas Markets 2025</h1>
-        <p>Explore the markets across Berlin</p>
+        <div class="header-top">
+            <div class="header-title-section">
+                <h1>Berlin Christmas Markets 2025</h1>
+                <p>Explore the markets across Berlin</p>
+            </div>
+            <div class="header-weather-section">
+                <div class="weather-widget">
+                    <h3>🌡️ Weather in Berlin</h3>
+                    <div id="weather" class="weather-content">
+                        <div class="loading">Loading weather...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="filter-section">
             <h3>Filter by Area</h3>
             <div id="filter-buttons">
@@ -1024,10 +1216,10 @@
         </div>
     </div>
     
-    <!-- Weather Widget - Fixed in bottom left -->
-    <div class="weather-widget">
+    <!-- Weather Widget - Fixed in bottom left (desktop only) -->
+    <div class="weather-widget desktop-weather">
         <h3>🌡️ Weather in Berlin</h3>
-        <div id="weather" class="weather-content">
+        <div id="weather-desktop" class="weather-content">
             <div class="loading">Loading weather...</div>
         </div>
     </div>
@@ -1054,19 +1246,31 @@
         var focusedMarketId = null; // Track currently focused market ID
         
         // Sidebar toggle functionality
-        function initSidebarToggle() {
+        var sidebarExpanded = false;
+        
+        function updateSidebarState() {
             var sidebar = document.getElementById('sidebar');
-            var toggleBtn = document.getElementById('sidebar-toggle');
-            var arrow = toggleBtn.querySelector('.arrow');
-            
-            toggleBtn.addEventListener('click', function() {
-                var isHidden = sidebar.classList.toggle('hidden');
-                
-                // Update arrow direction based on sidebar state
-                if (isHidden) {
-                    arrow.textContent = '◀'; // Point right when hidden (to show)
+            var arrow = document.querySelector('.sidebar-toggle .arrow');
+            if (sidebar && arrow) {
+                if (window.innerWidth <= 768) {
+                    // Mobile: bottom drawer behavior
+                    if (sidebarExpanded) {
+                        sidebar.classList.remove('collapsed');
+                        sidebar.classList.add('expanded');
+                        arrow.textContent = '▼';
+                    } else {
+                        sidebar.classList.remove('expanded');
+                        sidebar.classList.add('collapsed');
+                        arrow.textContent = '▲';
+                    }
                 } else {
-                    arrow.textContent = '▶'; // Point left when visible (to hide)
+                    // Desktop: side panel behavior
+                    var isHidden = sidebar.classList.contains('hidden');
+                    if (isHidden) {
+                        arrow.textContent = '◀';
+                    } else {
+                        arrow.textContent = '▶';
+                    }
                 }
                 
                 // Trigger map resize after sidebar animation
@@ -1075,6 +1279,74 @@
                         map.invalidateSize();
                     }
                 }, 300);
+            }
+        }
+        
+        function initSidebarToggle() {
+            var sidebar = document.getElementById('sidebar');
+            var toggleBtn = document.getElementById('sidebar-toggle');
+            var arrow = toggleBtn.querySelector('.arrow');
+            
+            if (window.innerWidth <= 768) {
+                // Mobile: bottom drawer
+                sidebar.classList.add('collapsed');
+                arrow.textContent = '▲';
+                
+                toggleBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    sidebarExpanded = !sidebarExpanded;
+                    updateSidebarState();
+                });
+                
+                // Swipe gesture support
+                var touchStartY = 0;
+                var touchStartTime = 0;
+                
+                sidebar.addEventListener('touchstart', function(e) {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartTime = Date.now();
+                }, { passive: true });
+                
+                sidebar.addEventListener('touchmove', function(e) {
+                    if (sidebarExpanded) {
+                        var currentY = e.touches[0].clientY;
+                        var deltaY = currentY - touchStartY;
+                        if (deltaY > 0) {
+                            var translateY = Math.min(deltaY, 100);
+                            sidebar.style.transform = 'translateY(' + translateY + 'px)';
+                        }
+                    }
+                }, { passive: true });
+                
+                sidebar.addEventListener('touchend', function(e) {
+                    var touchEndY = e.changedTouches[0].clientY;
+                    var deltaY = touchEndY - touchStartY;
+                    var deltaTime = Date.now() - touchStartTime;
+                    var velocity = Math.abs(deltaY) / deltaTime;
+                    
+                    sidebar.style.transform = '';
+                    
+                    if (sidebarExpanded && (deltaY > 50 || (deltaY > 20 && velocity > 0.3))) {
+                        sidebarExpanded = false;
+                        updateSidebarState();
+                    }
+                }, { passive: true });
+            } else {
+                // Desktop: side panel
+                toggleBtn.addEventListener('click', function() {
+                    var isHidden = sidebar.classList.toggle('hidden');
+                    updateSidebarState();
+                });
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                updateSidebarState();
+                if (map) {
+                    setTimeout(function() {
+                        map.invalidateSize();
+                    }, 100);
+                }
             });
         }
         
@@ -1694,7 +1966,7 @@
                             return m.marketId === marketId;
                         });
                         
-                        if (marker) {
+                if (marker) {
                             // Continue with focusing logic
                             focusMarketMarker(market, marker, marketId);
                         } else {
@@ -1714,6 +1986,12 @@
         // Helper function to focus on a market marker
         function focusMarketMarker(market, marker, marketId) {
             if (marker) {
+                // On mobile, collapse sidebar when market is selected
+                if (window.innerWidth <= 768) {
+                    sidebarExpanded = false;
+                    updateSidebarState();
+                }
+                
                 // Automatically select the district filter and draw boundary (without fitting bounds)
                 if (market.district) {
                     var districtButton = document.querySelector('.filter-btn[data-filter="' + market.district + '"]');
@@ -1777,7 +2055,7 @@
                         
                         // Wait for animation to complete, then open popup
                         setTimeout(function() {
-                            marker.openPopup();
+                    marker.openPopup();
                                 
                                 // Ensure popup is visible and fits on page
                                 setTimeout(function() {
@@ -1890,17 +2168,17 @@
                             }
                         }
                     }, 100);
-                    
-                    // Update active card
-                    document.querySelectorAll('.market-card').forEach(function(card) {
-                        card.classList.remove('active');
-                    });
-                    var activeCard = document.getElementById('card-' + marketId);
-                    if (activeCard) {
-                        activeCard.classList.add('active');
-                    }
+                
+                // Update active card
+                document.querySelectorAll('.market-card').forEach(function(card) {
+                    card.classList.remove('active');
+                });
+                var activeCard = document.getElementById('card-' + marketId);
+                if (activeCard) {
+                    activeCard.classList.add('active');
                 }
             }
+        }
         
         // Parse date string to check if market is active on a given date
         function isMarketActiveOnDate(market, date) {
@@ -2158,16 +2436,36 @@
                     var isDay = data.current.is_day === 1;
                     var weatherIcon = getWeatherIcon(data.current.weather_code, isDay);
                     
-                    document.getElementById('weather').innerHTML = 
-                        '<div class="weather-icon">' + weatherIcon + '</div>' +
-                        '<div class="weather-info">' +
-                            '<div class="weather-location">Berlin</div>' +
-                            '<div class="weather-desc">' + weatherDesc + '</div>' +
-                        '</div>' +
-                        '<div class="weather-temp">' + temp + '°C</div>';
+                    // Update desktop weather widget
+                    var desktopWeather = document.getElementById('weather-desktop');
+                    if (desktopWeather) {
+                        desktopWeather.innerHTML = 
+                            '<div class="weather-icon">' + weatherIcon + '</div>' +
+                            '<div class="weather-info">' +
+                                '<div class="weather-location">Berlin</div>' +
+                                '<div class="weather-desc">' + weatherDesc + '</div>' +
+                            '</div>' +
+                            '<div class="weather-temp">' + temp + '°C</div>';
+                    }
+                    
+                    // Update mobile weather widget (in header)
+                    var mobileWeather = document.getElementById('weather');
+                    if (mobileWeather) {
+                        mobileWeather.innerHTML = 
+                            '<div class="weather-icon">' + weatherIcon + '</div>' +
+                            '<div class="weather-temp">' + temp + '°C</div>';
+                    }
                 })
                 .catch(function() {
-                    document.getElementById('weather').innerHTML = '<div class="loading" style="color: #c41e3a;">Weather not available</div>';
+                    var errorMsg = '<div class="loading" style="color: #c41e3a;">Weather not available</div>';
+                    var desktopWeather = document.getElementById('weather-desktop');
+                    if (desktopWeather) {
+                        desktopWeather.innerHTML = errorMsg;
+                    }
+                    var mobileWeather = document.getElementById('weather');
+                    if (mobileWeather) {
+                        mobileWeather.innerHTML = errorMsg;
+                    }
                 });
         }
         
@@ -2702,6 +3000,16 @@
                     filterMarkets('all', this);
                 });
             }
+            
+            // Handle orientation changes on mobile
+            window.addEventListener('orientationchange', function() {
+                setTimeout(function() {
+                    if (map) {
+                        map.invalidateSize();
+                    }
+                    updateSidebarState();
+                }, 100);
+            });
         });
     </script>
 </body>
