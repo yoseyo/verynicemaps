@@ -1949,7 +1949,10 @@
         
         // Helper function to focus on a market marker
         function focusMarketMarker(market, marker, marketId) {
-            if (marker) {
+            if (!marker) return;
+
+            // Inner function that performs the actual pan/zoom + popup logic
+            function doFocus() {
                 // On mobile, collapse sidebar when market is selected
                 if (window.innerWidth <= 768) {
                     sidebarExpanded = false;
@@ -1971,8 +1974,8 @@
                     }
                 }
                 
-                // Target zoom level
-                var targetZoom = 14;
+                // Use a higher zoom to ensure clustered markers are fully separated
+                var targetZoom = Math.max(map.getZoom(), 17);
                 
                 // Calculate offset to account for sidebar (check if sidebar is visible)
                 var sidebar = document.getElementById('sidebar');
@@ -2021,63 +2024,6 @@
                         setTimeout(function() {
                     marker.openPopup();
                                 
-                                // Ensure popup is visible and fits on page
-                                setTimeout(function() {
-                                    var popup = marker.getPopup();
-                                    if (popup && popup.isOpen()) {
-                                        var popupElement = popup.getElement();
-                                        if (popupElement) {
-                                            var popupRect = popupElement.getBoundingClientRect();
-                                            var mapRect = mapContainer.getBoundingClientRect();
-                                            
-                                            // Get current bounds for calculations
-                                            var bounds = map.getBounds();
-                                            var ne = bounds.getNorthEast();
-                                            var sw = bounds.getSouthWest();
-                                            var lngPerPixel = (ne.lng - sw.lng) / mapWidth;
-                                            var latPerPixel = (ne.lat - sw.lat) / mapHeight;
-                                            
-                                            // Check if popup is outside visible map area
-                                            if (popupRect.right > mapRect.right || 
-                                                popupRect.left < mapRect.left ||
-                                                popupRect.top < mapRect.top ||
-                                                popupRect.bottom > mapRect.bottom) {
-                                                // Adjust pan to keep popup visible
-                                                var adjustLng = 0;
-                                                var adjustLat = 0;
-                                                
-                                                if (popupRect.right > mapRect.right) {
-                                                    adjustLng = (popupRect.right - mapRect.right) * lngPerPixel;
-                                                }
-                                                if (popupRect.left < mapRect.left) {
-                                                    adjustLng = -(mapRect.left - popupRect.left) * lngPerPixel;
-                                                }
-                                                if (popupRect.top < mapRect.top) {
-                                                    adjustLat = (mapRect.top - popupRect.top) * latPerPixel;
-                                                }
-                                                if (popupRect.bottom > mapRect.bottom) {
-                                                    adjustLat = -(popupRect.bottom - mapRect.bottom) * latPerPixel;
-                                                }
-                                                
-                                                if (adjustLng !== 0 || adjustLat !== 0) {
-                                                    var currentCenter = map.getCenter();
-                                                    map.panTo([currentCenter.lat + adjustLat, currentCenter.lng + adjustLng], { animate: true });
-                                                }
-                                            }
-                                        }
-                                    }
-                                }, 100);
-                                
-                                // Scroll sidebar to show the active card
-                                var activeCard = document.getElementById('card-' + marketId);
-                                if (activeCard) {
-                                    activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                            }, 400);
-                        } else {
-                            // No offset needed, just open popup
-                            marker.openPopup();
-                            
                             // Ensure popup is visible and fits on page
                             setTimeout(function() {
                                 var popup = marker.getPopup();
@@ -2117,8 +2063,8 @@
                                             }
                                             
                                             if (adjustLng !== 0 || adjustLat !== 0) {
-                                                var currentCenter = map.getCenter();
-                                                map.panTo([currentCenter.lat + adjustLat, currentCenter.lng + adjustLng], { animate: true });
+                                                var currentCenter2 = map.getCenter();
+                                                map.panTo([currentCenter2.lat + adjustLat, currentCenter2.lng + adjustLng], { animate: true });
                                             }
                                         }
                                     }
@@ -2130,17 +2076,84 @@
                             if (activeCard) {
                                 activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                             }
+                        }, 400);
+                    } else {
+                        // No offset needed, just open popup
+                        marker.openPopup();
+                        
+                        // Ensure popup is visible and fits on page
+                        setTimeout(function() {
+                            var popup = marker.getPopup();
+                            if (popup && popup.isOpen()) {
+                                var popupElement = popup.getElement();
+                                if (popupElement) {
+                                    var popupRect = popupElement.getBoundingClientRect();
+                                    var mapRect = mapContainer.getBoundingClientRect();
+                                    
+                                    // Get current bounds for calculations
+                                    var bounds = map.getBounds();
+                                    var ne = bounds.getNorthEast();
+                                    var sw = bounds.getSouthWest();
+                                    var lngPerPixel = (ne.lng - sw.lng) / mapWidth;
+                                    var latPerPixel = (ne.lat - sw.lat) / mapHeight;
+                                    
+                                    // Check if popup is outside visible map area
+                                    if (popupRect.right > mapRect.right || 
+                                        popupRect.left < mapRect.left ||
+                                        popupRect.top < mapRect.top ||
+                                        popupRect.bottom > mapRect.bottom) {
+                                        // Adjust pan to keep popup visible
+                                        var adjustLng = 0;
+                                        var adjustLat = 0;
+                                        
+                                        if (popupRect.right > mapRect.right) {
+                                            adjustLng = (popupRect.right - mapRect.right) * lngPerPixel;
+                                        }
+                                        if (popupRect.left < mapRect.left) {
+                                            adjustLng = -(mapRect.left - popupRect.left) * lngPerPixel;
+                                        }
+                                        if (popupRect.top < mapRect.top) {
+                                            adjustLat = (mapRect.top - popupRect.top) * latPerPixel;
+                                        }
+                                        if (popupRect.bottom > mapRect.bottom) {
+                                            adjustLat = -(popupRect.bottom - mapRect.bottom) * latPerPixel;
+                                        }
+                                        
+                                        if (adjustLng !== 0 || adjustLat !== 0) {
+                                            var currentCenter3 = map.getCenter();
+                                            map.panTo([currentCenter3.lat + adjustLat, currentCenter3.lng + adjustLng], { animate: true });
+                                        }
+                                    }
+                                }
+                            }
+                        }, 100);
+                        
+                        // Scroll sidebar to show the active card
+                        var activeCard2 = document.getElementById('card-' + marketId);
+                        if (activeCard2) {
+                            activeCard2.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         }
-                    }, 100);
+                    }
+                }, 100);
                 
                 // Update active card
                 document.querySelectorAll('.market-card').forEach(function(card) {
                     card.classList.remove('active');
                 });
-                var activeCard = document.getElementById('card-' + marketId);
-                if (activeCard) {
-                    activeCard.classList.add('active');
+                var activeCard3 = document.getElementById('card-' + marketId);
+                if (activeCard3) {
+                    activeCard3.classList.add('active');
                 }
+            }
+
+            // Ensure the marker is de-clustered and visible before focusing
+            if (markerClusterGroup && markerClusterGroup.zoomToShowLayer) {
+                markerClusterGroup.zoomToShowLayer(marker, function() {
+                    // After cluster is expanded and correct zoom is set, run focus logic
+                    doFocus();
+                });
+            } else {
+                doFocus();
             }
         }
         
