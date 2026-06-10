@@ -2338,7 +2338,7 @@
         // Load CSV data
         function loadCSVData() {
             // Load main CSV with display data
-            Papa.parse('berlin_christmas_markets_2025.csv', {
+            Papa.parse('data/berlin_christmas_markets_2025.csv', {
                 download: true,
                 header: true,
                 complete: function(results) {
@@ -2362,7 +2362,7 @@
                     });
                     
                     // Load ISO dates CSV for filtering
-                    Papa.parse('berlin_christmas_markets_2025_dates.csv', {
+                    Papa.parse('data/berlin_christmas_markets_2025_dates.csv', {
                         download: true,
                         header: true,
                         complete: function(datesResults) {
